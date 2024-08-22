@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"jyywong/snippetbox/internal/models"
 	"log/slog"
 	"net/http"
@@ -12,8 +13,9 @@ import (
 )
 
 type application struct {
-	logger   *slog.Logger
-	snippets *models.SnippetModel
+	logger        *slog.Logger
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -21,10 +23,17 @@ func main() {
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
 	db, err := openDB(*dsn)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	templateCache, err := newTemplateCache()
 
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 	app := &application{
-		logger:   slog.New(slog.NewTextHandler(os.Stdout, nil)),
-		snippets: &models.SnippetModel{DB: db},
+		logger:        logger,
+		snippets:      &models.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 	if err != nil {
 		app.logger.Error(err.Error())
