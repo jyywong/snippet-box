@@ -36,6 +36,7 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
 
 	if err != nil {
 		logger.Error(err.Error())
@@ -60,7 +61,7 @@ func main() {
 		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	app.logger.Error(err.Error())
 	os.Exit(1)
 }
